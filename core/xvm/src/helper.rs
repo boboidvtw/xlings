@@ -83,12 +83,18 @@ fn print_commands(path_to_check: &str) {
 
     if cfg!(target_os = "windows") {
         println!("\n# For PowerShell:");
-        println!(r#"[System.Environment]::SetEnvironmentVariable("PATH", "{}" + $env:PATH, "User")"#, path_to_check);
+        println!(r#"
+$userPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
+[System.Environment]::SetEnvironmentVariable("PATH", "{}" + $userPath, "User")
+        "#, path_to_check);
 
         println!("\n# For cmd:");
-        println!(r#"setx PATH "{};%PATH%""#, path_to_check);
+        println!(r#"
+for /f "tokens=2*" %%a in ('reg query "HKEY_CURRENT_USER\Environment" /v PATH') do set UserPath=%%b
+setx PATH "{};%PATH%"
+        "#, path_to_check);
 
-        println!("\n-- {}", "run this command in cmd or PowerShell.".yellow());
+        println!("\n-- {}", "run command in cmd or PowerShell.".yellow());
     } else {
         println!("\n# For bash/zsh:");
         println!(r#"export PATH="{}:$PATH""#, path_to_check);
